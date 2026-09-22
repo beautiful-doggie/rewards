@@ -28,3 +28,24 @@ footer{justify-content:flex-end}
 @keyframes prize-enter{from{opacity:0;transform:translateY(35px) scale(.9);filter:blur(5px)}to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 @media(max-width:650px){.reveal-layout.has-prize{grid-template-columns:1fr;gap:12px;padding:10px 0 24px}.has-prize .number-area{min-height:190px}.has-prize .number{font-size:clamp(65px,18vw,112px)}.awarded-prize{width:100%;max-width:350px;justify-self:center;padding:16px}.prize-art{height:150px}}
 @media(prefers-reduced-motion:reduce){.awarded-prize{animation:none}}
+
+/* Keep the presentation screen within a desktop fullscreen viewport.  The
+   mobile layout remains content-led, so it can still scroll when needed. */
+@media(min-width:651px){
+  .stage{height:100dvh;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+  header{padding:clamp(16px,2.4vh,30px) 4.3%}
+  .center{width:100%;min-height:0;margin:0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  footer{padding:clamp(14px,2vh,24px) 4.3%}
+}
+@media(min-width:651px) and (max-height:900px){
+  .center{padding:16px 20px}
+  .prize{margin-top:14px;padding:7px 20px}
+  .number-area{height:clamp(190px,29vh,270px)}
+  .shortcut{margin:10px 0 15px}
+  .reveal-layout.has-prize{gap:24px;padding:12px 0}
+  .has-prize .number-area{min-height:220px}
+  .awarded-prize{padding:16px}
+  .prize-art{height:clamp(100px,17vh,160px)}
+  .prize-caption{margin:10px 0 6px}
+  .prize-congrats{margin-top:8px}
+}
