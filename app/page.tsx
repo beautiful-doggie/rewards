@@ -105,7 +105,7 @@ export default function Home() {
     const animate = () => {
       setNumber(selectWinner(pool));
       tick++;
-      if (tick < 34) timers.current.push(setTimeout(animate, 45 + tick * 4));
+      if (tick < 34) timers.current.push(setTimeout(animate, 10 + tick));
       else { setNumber(winner); setRolling(false); setRevealed(true); busy.current = false; }
     };
     animate();
