@@ -1,8 +1,6 @@
 # Rewards · 现场抽奖
 
-进迭时空开发者大会抽奖大屏。使用 Next.js、React 和 Tailwind CSS，部署到腾讯云 CVM / 轻量应用服务器上的 Ubuntu Linux。
 
-已移除 Cloudflare Workers、Wrangler、vinext 和旧站点部署配置，不需要 Cloudflare 账号或绑定。
 
 ## 本地运行
 
@@ -29,8 +27,7 @@ npm start
 
 当前已部署地址：`http://106.55.10.82/rewards/`。目录 `/opt/rewards`，进程由 `rewards.service` 管理；Nginx 在原站点中包含 `/etc/nginx/snippets/rewards.conf`，首页继续使用原有 Dashboard。修改前的配置备份为 `/etc/nginx/sites-available/default.rewards-backup-20261014`。
 
-服务器 IP：`106.55.10.82`。以下以 Ubuntu 22.04 / 24.04、SSH 用户 `ubuntu`、端口 22 为例，需要 sudo 权限。若账号不同，请替换命令中的用户名。
-
+服务器 IP：`106.55.10.82`。以下以 Ubuntu 22.04 / 24.04、SSH 用户 `ubuntu`、端口 22 为例，
 ### 1. 准备系统
 
 在服务器执行，已有 Node.js 22.13+ 或 Nginx 时跳过对应安装：
@@ -139,8 +136,3 @@ curl -I http://127.0.0.1:3000/rewards/
 
 默认 `NEXT_PUBLIC_BASE_PATH=/rewards`。如果以后使用独立域名根路径部署，可将该值设为空，再调整 Nginx 路由并重新构建。此变量在构建时确定，不能只在运行时修改。
 
-## 验证记录（2026-10-14）
-
-腾讯云 Ubuntu 24.04、Node.js 22.23.3：生产构建和 TypeScript 检查通过。浏览器已验证抽奖不重复、刷新恢复、奖品图片上传展示、CSV 名单导出，页面与静态资源可通过 `/rewards/` 访问。
-
-现有全量 `npm run lint` 仍报告 React Hooks、可访问性和部分 UI 模板问题；没有为了迁移而关闭规则。新增部署相关 TypeScript / PostCSS 配置的 lint 检查通过。
