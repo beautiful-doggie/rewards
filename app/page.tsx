@@ -120,7 +120,7 @@ export default function Home() {
     if (imageLoading) return;
     const n = Number(total);
     if (!/^\d+$/.test(total) || !Number.isInteger(n) || n < 1 || n > 10000) { setError('请输入 1–10000 之间的整数。'); return; }
-    if (state.winners.some(w => w.number > n)) { setError('新人数不能小于已中奖的最大号码；如需重新开始，请先重置。'); return; }
+    if (state.winners.some(w => w.number > n)) { setError('人数不能小于已中奖的最大号码；如需重新开始，请先重置。'); return; }
     if (!prize.trim()) { setError('请填写本轮奖项名称。'); return; }
     const images = { ...state.prizeImages };
     let imageId = '';
@@ -144,7 +144,7 @@ export default function Home() {
   return <main className={revealed ? 'stage revealed' : 'stage'}>
     <div className="ambient" aria-hidden="true" />
     {revealed && <div className="confetti" aria-hidden="true" key={state.winners.length}>{Array.from({ length: 90 }, (_, i) => <i key={i} style={{ left: `${(i * 37) % 100}%`, background: ['#ffe7a6', '#d6a652', '#fff8e8', '#e89053'][i % 4], animationDelay: `${(i % 13) * .09}s`, animationDuration: `${3 + (i % 5) * .45}s`, transform: `rotate(${i * 17}deg)` }} />)}</div>}
-    <header><div className="brand"><span className="brandmark" aria-hidden="true" /><div>进迭时空<span>SPACEMIT · DEVELOPERS 2026</span></div></div><div className="toolbar"><span className="live"><i /> 现场幸运时刻</span><Button variant="ghost" aria-label="全屏展示" title="全屏展示" onClick={async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { setNotice('当前浏览器不支持全屏，请使用浏览器菜单进入全屏。'); } }}><Maximize /></Button><Button variant="ghost" disabled={rolling || !ready} onClick={() => { setTotal(String(state.total)); setPrize(state.prize); setPrizeImage(state.prizeImages[state.prizeImageId] ?? ''); setError(''); setReset(false); setSettings(true); }}><Settings2 /> 后台设置</Button></div></header>
+    <header><div className="brand"><span className="brandmark" aria-hidden="true" style={{ backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH ?? '/rewards'}/spacemit-mark.svg)` }} /><div>进迭时空<span>SPACEMIT · DEVELOPERS 2026</span></div></div><div className="toolbar"><span className="live"><i /> 现场幸运时刻</span><Button variant="ghost" aria-label="全屏展示" title="全屏展示" onClick={async () => { try { if (document.fullscreenElement) await document.exitFullscreen(); else await document.documentElement.requestFullscreen(); } catch { setNotice('当前浏览器不支持全屏，请使用浏览器菜单进入全屏。'); } }}><Maximize /></Button><Button variant="ghost" disabled={rolling || !ready} onClick={() => { setTotal(String(state.total)); setPrize(state.prize); setPrizeImage(state.prizeImages[state.prizeImageId] ?? ''); setError(''); setReset(false); setSettings(true); }}><Settings2 /> 后台设置</Button></div></header>
     <section className="center">
       <div className="eyebrow"><span /> THE LUCKY MOMENT <span /></div>
       <h1>进迭时空开发者大会 <em>2026</em></h1>
@@ -170,7 +170,7 @@ export default function Home() {
     </section>
     <footer><span>Open Source, Build Things</span></footer>
     {notice && <div className="notice" role="alert">{notice}<Button variant="ghost" onClick={() => setNotice('')}>知道了</Button></div>}
-    <Dialog open={settings} onOpenChange={closeSettings}><DialogContent className="settings"><DialogTitle>抽奖后台设置</DialogTitle><DialogDescription>现场按 1 至到场人数连续发号。设置和中奖记录仅保存在本机此浏览器，请只使用一个抽奖页面。</DialogDescription><label htmlFor="total">现场到场人数</label><Input id="total" type="number" min={1} max={10000} value={total} onChange={e => setTotal(e.target.value)} /><label htmlFor="prize">本轮奖品名称</label><Input id="prize" maxLength={40} value={prize} onChange={e => setPrize(e.target.value)} /><label htmlFor="prize-image">奖品图片（可选）</label>
+    <Dialog open={settings} onOpenChange={closeSettings}><DialogContent className="settings"><DialogTitle>抽奖后台设置</DialogTitle><DialogDescription>现场按 1 到到场人数连续编号。设置和中奖记录仅保存在本机此浏览器，请只使用一个抽奖页面。</DialogDescription><label htmlFor="total">现场到场人数</label><Input id="total" type="number" min={1} max={10000} value={total} onChange={e => setTotal(e.target.value)} /><label htmlFor="prize">本轮奖品名称</label><Input id="prize" maxLength={40} value={prize} onChange={e => setPrize(e.target.value)} /><label htmlFor="prize-image">奖品图片（可选）</label>
       <Input id="prize-image" type="file" accept="image/png,image/jpeg,image/webp" disabled={imageLoading} onChange={e => { const file = e.target.files?.[0]; e.target.value = ''; if (file) void uploadImage(file); }} />
       <p className="hint">支持 PNG、JPG、WebP，单张不超过 500 KB。图片仅保存在本机浏览器，中奖时和名称一起展示。</p>
       {imageLoading && <p role="status">正在读取图片…</p>}

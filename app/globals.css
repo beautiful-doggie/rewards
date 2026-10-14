@@ -14,7 +14,7 @@
 .tagline{font-size:clamp(18px,2vw,26px);font-weight:600;letter-spacing:clamp(3px,.45vw,6px);color:#d7bd8c}
 
 footer{justify-content:flex-end}
-.brandmark{border:0;background:url('/spacemit-mark.svg') center/contain no-repeat}
+.brandmark{border:0;background-position:center;background-size:contain;background-repeat:no-repeat}
 
 /* Winner and prize enter together without covering the next-round controls. */
 .reveal-layout{width:100%;margin:0 auto}.reveal-layout .number-area{width:100%}

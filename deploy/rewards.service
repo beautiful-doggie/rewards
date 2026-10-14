@@ -1,0 +1,26 @@
+[Unit]
+Description=Rewards lottery website
+After=network.target
+
+[Service]
+Type=simple
+User=rewards
+Group=rewards
+WorkingDirectory=/opt/rewards
+Environment=NODE_ENV=production
+Environment=NEXT_TELEMETRY_DISABLED=1
+# Requires a system-wide Node.js installation at /usr/bin/node.
+ExecStart=/usr/bin/node /opt/rewards/node_modules/next/dist/bin/next start --hostname 127.0.0.1 --port 3000
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=143
+TimeoutStopSec=30
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/opt/rewards/.next
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target
