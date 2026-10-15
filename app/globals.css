@@ -49,3 +49,17 @@ footer{justify-content:flex-end}
   .prize-caption{margin:10px 0 6px}
   .prize-congrats{margin-top:8px}
 }
+
+/* Show only the prize for the round being drawn or its revealed result. */
+.prize b{font-weight:500}.prize>span{padding-right:10px;border-right:1px solid #e2bc7355;font-size:12px}
+.awarded-prize{animation:none}.revealed .awarded-prize{animation:prize-enter .9s cubic-bezier(.16,1,.3,1) both}
+.draw:disabled:hover{transform:none}.shortcut{min-height:16px;letter-spacing:.5px}
+@media(min-width:651px) and (max-height:670px){
+ .stage{height:auto;min-height:100svh}.center{padding:16px 20px}
+}
+@media(max-width:650px){
+ .prize{font-size:12px;padding:8px 12px;gap:8px}.prize>span{font-size:10px;white-space:nowrap;padding-right:8px}.shortcut{font-size:10px}
+}
+
+/* Space between the draw button and event statistics. */
+.center>.stats{margin-top:24px}

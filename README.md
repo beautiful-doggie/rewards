@@ -2,6 +2,12 @@
 
 
 
+## 六轮现场抽奖
+
+奖品顺序固定为：第 1、2 轮 K1 MUSE PI PRO，第 3、4 轮 K1 MUSE BOOK，第 5、6 轮 K3 PICO ITX。返回大屏后，每点击一次“抽奖”完成一轮，页面只展示本轮的一张奖品图片和名称，不展示全部奖品列表或下一轮奖品预告。中奖后保留本轮结果，点击下一轮抽奖时自动切换到该轮奖品；六轮使用互不重复的中奖号码，第六轮结束后自动停止。
+
+奖品图片存放于 `public/prizes/`。参与人数可在“活动设置”中调整（至少 6 人）；演练后可以清空本场进度并从第一轮重新开始。进度保存在当前浏览器的 `localStorage` 中，部署或更新服务器不会自动清除进度。
+
 ## 本地运行
 
 需要 Node.js 22.13+（推荐 22 LTS）和 npm。
@@ -130,9 +136,23 @@ curl -I http://127.0.0.1:3000/rewards/
 
 ## 抽奖数据与迁移
 
-人数、奖品图片和中奖记录存储在当前浏览器的 `localStorage` 中，服务端没有数据库。请使用固定电脑、浏览器和访问地址，保持单个抽奖页面；更新服务器代码不会清空同一地址下的浏览器记录。
+人数和中奖记录存储在当前浏览器的 `localStorage` 中，奖品图片随项目部署，服务端没有数据库。请使用固定电脑、浏览器和访问地址，保持单个抽奖页面；更新服务器代码不会清空同一地址下的浏览器记录。
 
 浏览器存储按协议、主机和端口隔离。从旧 Workers 域名迁移到 IP，或再从 HTTP 切换到 HTTPS 域名，都会使用不同的存储空间，旧记录不会自动迁移。活动前确定最终地址；如旧页面仍可访问，应先导出中奖名单留存（CSV 是名单备份，不支持重新导入）。删除 Worker 不会将浏览器中的记录保存到腾讯云。
 
-默认 `NEXT_PUBLIC_BASE_PATH=/rewards`。如果以后使用独立域名根路径部署，可将该值设为空，再调整 Nginx 路由并重新构建。此变量在构建时确定，不能只在运行时修改。
+默认 `NEXT_PUBLIC_BASE_PATH=/rewards`。若改为独立站点根路径，可将该值设为空，再调整 Nginx 路由并重新构建。此变量在构建时确定，不能只在运行时修改。
 
+
+六轮模式使用独立存储键 `spacemit-lottery-2026-six-rounds-v1`。首次打开时沿用旧版合法人数，旧版中奖记录保留在 `spacemit-lottery-2026-v1` 中，不占用新的六轮进度。每次抽奖先保存结果再播放动画，刷新仍保留该轮号码。浏览器无法读取本场记录时会暂停抽奖，避免静默丢失进度。
+
+## 奖品图片来源
+
+使用进迭时空官网产品图片，裁切产品主体并压缩为 WebP，避免现场依赖外站加载。
+
+- [K1 MUSE PI PRO 原图](https://cdn-resource.spacemit.com/file/officialweb/assets/images/hardware/detail/muse-pi-pro/MUSE%20PI%20Pro_%E4%BA%A7%E5%93%81%E6%A6%82%E8%A7%88_02.webp)
+- [K1 MUSE BOOK 原图](https://cdn-resource.spacemit.com/file/officialweb/assets/images/hardware/detail/K1%20MUSE%20Book/MUSE%20Book_01.webp)
+- [K3 PICO ITX 原图](https://cdn-resource.spacemit.com/file/officialweb/assets/images/hardware/detail/K3-Pico-ITX/K3%20Pico%20ITX_00.webp)
+
+## 六轮模式验证
+
+TypeScript 和本次修改文件的 lint 检查通过；独立浏览器验证了六轮奖品顺序、号码不重复、连点保护、动画中刷新恢复、六轮结束后停止及 CSV 导出。测试记录只存在测试浏览器中。
