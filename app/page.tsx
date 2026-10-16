@@ -21,6 +21,7 @@ import {
   Trophy,
   Download,
   RotateCcw,
+  Pause,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -109,7 +110,7 @@ function Lottery({ ready }: { ready: boolean }) {
   );
   const [reset, setReset] = useState(false);
   const busy = useRef(false);
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const completed = state.winners.length;
   const finished = completed === ROUNDS.length;
   // Saving happens before the animation; keep that round's prize on screen until the next click.
@@ -122,8 +123,9 @@ function Lottery({ ready }: { ready: boolean }) {
     String(n).padStart(Math.max(3, String(state.total).length), '0');
 
   useEffect(() => {
-    const pendingTimers = timers.current;
-    return () => pendingTimers.forEach(clearTimeout);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, []);
 
   function save(next: LotteryState): boolean {
@@ -194,21 +196,21 @@ function Lottery({ ready }: { ready: boolean }) {
     setRolling(true);
     setRevealed(false);
     setNotice('');
-    timers.current.forEach(clearTimeout);
-    timers.current.length = 0;
-    let tick = 0;
     const animate = () => {
       setNumber(pool[Math.floor(Math.random() * pool.length)]);
-      tick++;
-      if (tick < 34) timers.current.push(setTimeout(animate, 10 + tick));
-      else {
-        setNumber(winner);
-        setRolling(false);
-        setRevealed(true);
-        busy.current = false;
-      }
+      timer.current = setTimeout(animate, 70);
     };
     animate();
+  }
+
+  function pauseDraw() {
+    if (!rolling || !busy.current) return;
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    setNumber(state.winners.at(-1)?.number ?? null);
+    setRolling(false);
+    setRevealed(true);
+    busy.current = false;
   }
 
   function apply() {
@@ -411,7 +413,7 @@ function Lottery({ ready }: { ready: boolean }) {
               : '等待抽奖'}
         </output>
         <div className="draw-actions">
-          {(revealed || rolling) && completed > 0 && (
+          {revealed && completed > 0 && (
             <Button
               variant="outline"
               className="redraw"
@@ -423,12 +425,12 @@ function Lottery({ ready }: { ready: boolean }) {
           )}
           <Button
             className="draw"
-            disabled={!ready || storageBlocked || rolling || finished}
-            onClick={() => draw()}
+            disabled={!ready || storageBlocked || (!rolling && finished)}
+            onClick={() => (rolling ? pauseDraw() : draw())}
           >
-            <Sparkles size={22} />
+            {rolling ? <Pause size={22} /> : <Sparkles size={22} />}
             {rolling
-              ? '好运即将揭晓…'
+              ? '让我看看谁是幸运儿～'
               : finished
                 ? '六轮抽奖已完成'
                 : completed
