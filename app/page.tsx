@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Trophy,
   Download,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,11 @@ function loadSession(ready: boolean) {
     if (raw !== null) {
       const stored: unknown = JSON.parse(raw);
       if (!isLotteryState(stored)) throw new Error('Invalid lottery state');
-      session.state = { ...stored, unissued: stored.unissued ?? [] };
+      session.state = {
+        ...stored,
+        unissued: stored.unissued ?? [],
+        unclaimed: stored.unclaimed ?? [],
+      };
     } else {
       // A new event starts from round one; never rewrite the old free-form records.
       const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
@@ -54,7 +59,12 @@ function loadSession(ready: boolean) {
           previous.total >= ROUNDS.length &&
           previous.total <= 10000
         ) {
-          session.state = { total: previous.total, winners: [], unissued: [] };
+          session.state = {
+            total: previous.total,
+            winners: [],
+            unissued: [],
+            unclaimed: [],
+          };
         }
         if (previous?.winners?.length)
           session.notice =
@@ -94,13 +104,14 @@ function Lottery({ ready }: { ready: boolean }) {
   const [number, setNumber] = useState<number | null>(
     session.state.winners.at(-1)?.number ?? null,
   );
-  const [revealed, setRevealed] = useState(session.state.winners.length > 0);
+  const [revealed, setRevealed] = useState(
+    session.state.winners.length > 0,
+  );
   const [reset, setReset] = useState(false);
   const busy = useRef(false);
   const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
   const completed = state.winners.length;
   const finished = completed === ROUNDS.length;
-  const nextPrize = ROUNDS[completed];
   // Saving happens before the animation; keep that round's prize on screen until the next click.
   const displayRound =
     (rolling || revealed) && completed
@@ -128,23 +139,33 @@ function Lottery({ ready }: { ready: boolean }) {
     return true;
   }
 
-  function draw() {
+  function draw(redraw = false) {
     if (
       !ready ||
       storageBlocked ||
       busy.current ||
       settings ||
       history ||
-      finished
+      (redraw ? !revealed || !completed : finished)
     )
       return;
     // Ref guard also blocks multiple clicks before React updates the disabled button.
     busy.current = true;
+    const winners = redraw ? state.winners.slice(0, -1) : state.winners;
+    const unclaimed = redraw
+      ? [...state.unclaimed, state.winners[completed - 1].number]
+      : state.unclaimed;
     const excluded = new Set(state.winners.map((w) => w.number));
     for (const n of state.unissued) excluded.add(n);
+    for (const n of state.unclaimed) excluded.add(n);
     const pool = Array.from({ length: state.total }, (_, i) => i + 1).filter(
       (n) => !excluded.has(n),
     );
+    if (!pool.length) {
+      busy.current = false;
+      setNotice('暂无可抽号码，请在活动设置中增加参与人数或核对未发出号码后重试。');
+      return;
+    }
     let winner: number;
     try {
       winner = selectWinner(pool);
@@ -156,11 +177,12 @@ function Lottery({ ready }: { ready: boolean }) {
     if (
       !save({
         ...state,
+        unclaimed,
         winners: [
-          ...state.winners,
+          ...winners,
           {
             number: winner,
-            prize: nextPrize.name,
+            prize: ROUNDS[winners.length].name,
             time: new Date().toISOString(),
           },
         ],
@@ -171,6 +193,7 @@ function Lottery({ ready }: { ready: boolean }) {
     }
     setRolling(true);
     setRevealed(false);
+    setNotice('');
     timers.current.forEach(clearTimeout);
     timers.current.length = 0;
     let tick = 0;
@@ -203,6 +226,10 @@ function Lottery({ ready }: { ready: boolean }) {
       setError('人数不能小于已中奖号码；如需重新开始，请先重置记录。');
       return;
     }
+    if (state.unclaimed.some((number) => number > n)) {
+      setError('人数不能小于无人认领号码；如需重新开始，请先重置本场记录。');
+      return;
+    }
     let unissuedNumbers: number[];
     try {
       unissuedNumbers = parseUnissuedNumbers(unissued, n);
@@ -214,8 +241,9 @@ function Lottery({ ready }: { ready: boolean }) {
       setError('未发出号码不能包含已抽中的中奖号码。');
       return;
     }
-    if (n - unissuedNumbers.length < ROUNDS.length) {
-      setError(`至少需要 ${ROUNDS.length} 个可抽号码才能完成六轮抽奖。`);
+    const excludedNumbers = new Set([...unissuedNumbers, ...state.unclaimed]);
+    if (n - excludedNumbers.size < ROUNDS.length) {
+      setError(`扣除未发出及无人认领号码后，至少需要 ${ROUNDS.length} 个号码才能完成六轮抽奖。`);
       return;
     }
     if (!save({ ...state, total: n, unissued: unissuedNumbers })) return;
@@ -224,7 +252,7 @@ function Lottery({ ready }: { ready: boolean }) {
   }
 
   function resetEvent() {
-    if (!save({ ...state, winners: [] })) return;
+    if (!save({ ...state, winners: [], unclaimed: [] })) return;
     setNumber(null);
     setRevealed(false);
     setReset(false);
@@ -382,19 +410,33 @@ function Lottery({ ready }: { ready: boolean }) {
               ? '抽奖中'
               : '等待抽奖'}
         </output>
-        <Button
-          className="draw"
-          disabled={!ready || storageBlocked || rolling || finished}
-          onClick={draw}
-        >
-          <Sparkles size={22} />
-          {rolling
-            ? '好运即将揭晓…'
-            : finished
-              ? '六轮抽奖已完成'
-              : `抽奖 · 第 ${completed + 1} / 6 轮`}
-          {!rolling && !finished && <ArrowRight size={22} />}
-        </Button>
+        <div className="draw-actions">
+          {(revealed || rolling) && completed > 0 && (
+            <Button
+              variant="outline"
+              className="redraw"
+              disabled={!ready || storageBlocked || rolling}
+              onClick={() => draw(true)}
+            >
+              <RotateCcw size={18} /> 重抽本轮
+            </Button>
+          )}
+          <Button
+            className="draw"
+            disabled={!ready || storageBlocked || rolling || finished}
+            onClick={() => draw()}
+          >
+            <Sparkles size={22} />
+            {rolling
+              ? '好运即将揭晓…'
+              : finished
+                ? '六轮抽奖已完成'
+                : completed
+                  ? `抽下一轮 · ${completed + 1} / 6`
+                  : '抽奖 · 第 1 / 6 轮'}
+            {!rolling && !finished && <ArrowRight size={22} />}
+          </Button>
+        </div>
         <div className="stats">
           <div>
             参与号码 <strong>001 — {digits(state.total)}</strong>
@@ -460,6 +502,11 @@ function Lottery({ ready }: { ready: boolean }) {
           <p className="hint">
             用逗号分隔号码或区间，例如 40-50, 83-100。未发出的号码不会参与抽奖；号码从 001 开始，已中奖号码不会再次抽中。设置和进度保存在此浏览器，请保持一个抽奖页面。演练后可重置为第 1 轮。
           </p>
+          {state.unclaimed.length > 0 && (
+            <p className="hint">
+              本场无人认领号码：{formatUnissuedNumbers(state.unclaimed)}。这些号码不再参与抽奖，重置本场抽奖记录后清除。
+            </p>
+          )}
           {error && (
             <p role="alert" className="error">
               {error}
@@ -473,7 +520,7 @@ function Lottery({ ready }: { ready: boolean }) {
               <>
                 <p>
                   确定清空本场 {completed} 条中奖记录并回到第 1
-                  轮？此操作无法撤销。
+                  轮？无人认领号码也会清除，未发出号码设置保留。此操作无法撤销。
                 </p>
                 <Button variant="destructive" onClick={resetEvent}>
                   确认重置为第 1 轮
@@ -485,7 +532,7 @@ function Lottery({ ready }: { ready: boolean }) {
             ) : (
               <Button
                 variant="ghost"
-                disabled={!completed && !storageBlocked}
+                disabled={!completed && !state.unclaimed.length && !storageBlocked}
                 onClick={() => setReset(true)}
               >
                 重置本场抽奖记录

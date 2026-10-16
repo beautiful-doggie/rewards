@@ -24,17 +24,20 @@ export type LotteryState = {
   total: number;
   winners: Winner[];
   unissued: number[];
+  unclaimed: number[];
 };
 export const INITIAL_STATE: LotteryState = {
   total: 150,
   winners: [],
   unissued: [],
+  unclaimed: [],
 };
 
 export function isLotteryState(value: unknown): value is LotteryState {
   if (!value || typeof value !== 'object') return false;
   const s = value as LotteryState;
   const unissued = s.unissued ?? [];
+  const unclaimed = s.unclaimed ?? [];
   return (
     Number.isInteger(s.total) &&
     s.total >= ROUNDS.length &&
@@ -58,7 +61,13 @@ export function isLotteryState(value: unknown): value is LotteryState {
     ) &&
     new Set(unissued).size === unissued.length &&
     unissued.length <= s.total - ROUNDS.length &&
-    s.winners.every((w) => !unissued.includes(w.number))
+    s.winners.every((w) => !unissued.includes(w.number)) &&
+    Array.isArray(unclaimed) &&
+    unclaimed.every(
+      (n) => Number.isInteger(n) && n >= 1 && n <= s.total,
+    ) &&
+    new Set(unclaimed).size === unclaimed.length &&
+    s.winners.every((w) => !unclaimed.includes(w.number))
   );
 }
 
